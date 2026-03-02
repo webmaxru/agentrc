@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 
 import type { Key } from "ink";
-import { Box, Text, useApp, useInput, useStdout } from "ink";
+import { Box, Text, useApp, useInput, useStdout, useIsScreenReaderEnabled } from "ink";
 import React, { useEffect, useMemo, useState } from "react";
 
 import type { RepoApp, Area } from "../services/analyzer";
@@ -112,14 +112,23 @@ function KeyHint({ k, label }: { k: string; label: string }): React.JSX.Element 
   );
 }
 
-function Divider({ label, columns }: { label?: string; columns: number }): React.JSX.Element {
+function Divider({
+  label,
+  columns,
+  accessible
+}: {
+  label?: string;
+  columns: number;
+  accessible?: boolean;
+}): React.JSX.Element {
   // Account for root Box border (2) + padding (2) = 4 chars
   const innerWidth = Math.max(0, columns - 4);
+  const lineChar = accessible ? "-" : "─";
   if (label) {
-    const prefix = "── ";
+    const prefix = accessible ? "-- " : "── ";
     const suffix = " ";
     const used = prefix.length + label.length + suffix.length;
-    const fill = "─".repeat(Math.max(1, innerWidth - used));
+    const fill = lineChar.repeat(Math.max(1, innerWidth - used));
     return (
       <Box marginTop={1}>
         <Text color="gray" dimColor>
@@ -135,7 +144,7 @@ function Divider({ label, columns }: { label?: string; columns: number }): React
       </Box>
     );
   }
-  const fill = "─".repeat(Math.max(1, innerWidth));
+  const fill = lineChar.repeat(Math.max(1, innerWidth));
   return (
     <Box marginTop={1}>
       <Text color="gray" dimColor>
@@ -156,8 +165,9 @@ function pickBestModel(available: string[], fallback: string): string {
 
 export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JSX.Element {
   const app = useApp();
+  const accessible = useIsScreenReaderEnabled();
   const terminalColumns = useTerminalColumns();
-  const [status, setStatus] = useState<Status>(skipAnimation ? "idle" : "intro");
+  const [status, setStatus] = useState<Status>(skipAnimation || accessible ? "idle" : "intro");
   const [message, setMessage] = useState<string>("");
   const [generatedContent, setGeneratedContent] = useState<string>("");
   const [evalResults, setEvalResults] = useState<EvalResult[] | null>(null);
@@ -836,7 +846,20 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
     { isActive: inputActive }
   );
 
-  const statusIcon = status === "error" ? "✗" : status === "done" ? "✓" : isLoading ? spinner : "●";
+  const statusIcon =
+    status === "error"
+      ? accessible
+        ? "ERROR"
+        : "✗"
+      : status === "done"
+        ? accessible
+          ? "OK"
+          : "✓"
+        : isLoading
+          ? spinner
+          : accessible
+            ? "*"
+            : "●";
   const statusLabel =
     status === "intro"
       ? "starting"
@@ -876,7 +899,8 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
         ? (withoutUsage.promptTokens ?? 0) + (withoutUsage.completionTokens ?? 0)
         : undefined);
     if (withTotal == null && withoutTotal == null) return "tokens n/a";
-    return `tokens w/: ${withTotal ?? "n/a"} • w/o: ${withoutTotal ?? "n/a"}`;
+    if (accessible) return `tokens with: ${withTotal ?? "n/a"}, without: ${withoutTotal ?? "n/a"}`;
+    return `tokens w/: ${withTotal ?? "n/a"} \u2022 w/o: ${withoutTotal ?? "n/a"}`;
   };
 
   const previewLines = generatedContent.split("\n").slice(0, 20);
@@ -894,7 +918,12 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
   const innerWidth = Math.max(0, terminalColumns - 4);
 
   return (
-    <Box flexDirection="column" padding={1} borderStyle="round" borderColor="magenta" width="100%">
+    <Box
+      flexDirection="column"
+      padding={1}
+      {...(accessible ? {} : { borderStyle: "round" as const, borderColor: "magenta" })}
+      width="100%"
+    >
       {status === "intro" ? (
         <AnimatedBanner onComplete={handleAnimationComplete} maxWidth={innerWidth} />
       ) : (
@@ -912,7 +941,7 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
       </Box>
 
       {/* Context */}
-      <Divider columns={terminalColumns} label="Context" />
+      <Divider columns={terminalColumns} label="Context" accessible={accessible} />
       <Box marginTop={0} flexDirection="column" paddingLeft={1}>
         <Text>
           <Text color="gray">Repo </Text>
@@ -953,7 +982,7 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
       </Box>
 
       {/* Activity */}
-      <Divider columns={terminalColumns} label="Activity" />
+      <Divider columns={terminalColumns} label="Activity" accessible={accessible} />
       <Box marginTop={0} flexDirection="column" paddingLeft={1}>
         {activityLog.length === 0 && !message ? (
           <Text color="gray" dimColor>
@@ -997,7 +1026,11 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
       {/* Model Picker */}
       {status === "model-pick" && availableModels.length > 0 && (
         <>
-          <Divider columns={terminalColumns} label={`Pick ${modelPickTarget} model`} />
+          <Divider
+            columns={terminalColumns}
+            label={`Pick ${modelPickTarget} model`}
+            accessible={accessible}
+          />
           <Box flexDirection="column" paddingLeft={1}>
             {availableModels.map((model, i) => {
               const current = modelPickTarget === "eval" ? evalModel : judgeModel;
@@ -1005,7 +1038,9 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
               const isCursor = i === modelCursor;
               return (
                 <Text key={model}>
-                  <Text color={isCursor ? "cyan" : undefined}>{isCursor ? "\u276F " : "  "}</Text>
+                  <Text color={isCursor ? "cyan" : undefined}>
+                    {isCursor ? (accessible ? "> " : "\u276F ") : "  "}
+                  </Text>
                   <Text
                     color={isCurrent ? "green" : isCursor ? "cyanBright" : "white"}
                     bold={isCursor}
@@ -1033,7 +1068,11 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
       {/* App picker for monorepo generate */}
       {status === "generate-app-pick" && repoApps.length > 0 && (
         <>
-          <Divider columns={terminalColumns} label={`Generate ${generateTarget}`} />
+          <Divider
+            columns={terminalColumns}
+            label={`Generate ${generateTarget}`}
+            accessible={accessible}
+          />
           <Box flexDirection="column" paddingLeft={1}>
             {repoApps.map((app, i) => (
               <Text key={app.name}>
@@ -1055,12 +1094,16 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
       {/* Area picker for file-based instructions */}
       {status === "generate-area-pick" && repoAreas.length > 0 && (
         <>
-          <Divider columns={terminalColumns} label="File-based instructions" />
+          <Divider
+            columns={terminalColumns}
+            label="File-based instructions"
+            accessible={accessible}
+          />
           <Box flexDirection="column" paddingLeft={1}>
             {repoAreas.map((area, i) => (
               <Text key={area.name}>
                 <Text color={i === areaCursor ? "cyanBright" : "gray"}>
-                  {i === areaCursor ? "▶" : " "}
+                  {i === areaCursor ? (accessible ? ">" : "▶") : " "}
                 </Text>
                 <Text color="gray"> </Text>
                 <Text color={i === areaCursor ? "white" : "gray"} bold={i === areaCursor}>
@@ -1087,7 +1130,7 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
         <Box marginTop={1} paddingLeft={1}>
           <Text color="cyan">Eval case count: </Text>
           <Text color="white" bold>
-            {evalCaseCountInput || "▍"}
+            {evalCaseCountInput || (accessible ? "|" : "▍")}
           </Text>
         </Box>
       )}
@@ -1097,8 +1140,7 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
         <Box
           flexDirection="column"
           marginTop={1}
-          borderStyle="single"
-          borderColor="gray"
+          {...(accessible ? {} : { borderStyle: "single" as const, borderColor: "gray" })}
           paddingX={1}
         >
           <Text color="cyan" bold>
@@ -1111,20 +1153,26 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
       {/* Eval Results */}
       {evalResults && evalResults.length > 0 && (
         <>
-          <Divider columns={terminalColumns} label="Eval Results" />
+          <Divider columns={terminalColumns} label="Eval Results" accessible={accessible} />
           <Box flexDirection="column" paddingLeft={1}>
             {evalResults.map((r) => (
               <Text key={r.id}>
                 <Text
                   color={r.verdict === "pass" ? "green" : r.verdict === "fail" ? "red" : "yellow"}
                 >
-                  {r.verdict === "pass" ? "✓" : r.verdict === "fail" ? "✗" : "?"}{" "}
+                  {accessible
+                    ? `Verdict: ${r.verdict === "pass" ? "PASS" : r.verdict === "fail" ? "FAIL" : "UNKNOWN"} ${r.id} (score:${r.score} ${formatTokens(r)})`
+                    : `${r.verdict === "pass" ? "✓" : r.verdict === "fail" ? "✗" : "?"} `}
                 </Text>
-                <Text>{r.id}</Text>
-                <Text color="gray">
-                  {" "}
-                  score:{r.score} • {formatTokens(r)}
-                </Text>
+                {!accessible && (
+                  <>
+                    <Text>{r.id}</Text>
+                    <Text color="gray">
+                      {" "}
+                      score:{r.score} • {formatTokens(r)}
+                    </Text>
+                  </>
+                )}
               </Text>
             ))}
             {evalViewerPath && (
@@ -1137,7 +1185,7 @@ export function AgentRCTui({ repoPath, skipAnimation = false }: Props): React.JS
       )}
 
       {/* Commands */}
-      <Divider columns={terminalColumns} label="Commands" />
+      <Divider columns={terminalColumns} label="Commands" accessible={accessible} />
       <Box marginTop={0} paddingLeft={1} flexDirection="column">
         {status === "intro" ? (
           <Text color="gray">Press any key to skip animation...</Text>
