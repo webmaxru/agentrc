@@ -8,7 +8,13 @@
 > [!WARNING]
 > **Experimental** — This project is under active development. Expect breaking changes to commands, APIs, and output formats. Ready for early adopter feedback — [open an issue](https://github.com/microsoft/agentrc/issues).
 
-AgentRC is a CLI and VS Code extension that primes repositories for AI-assisted development. It analyzes a repo, scores AI readiness across a 5-level maturity model, generates repo-specific instructions and AI configs, evaluates whether those instructions help, and supports the same workflow from a local repo to org-scale PR automation.
+AI coding agents are only as effective as the context they receive. AgentRC is a CLI and VS Code extension that closes the gap — from a single repo to hundreds across your org.
+
+**Measure** — Analyze repo structure and score AI readiness across a 5-level maturity model.
+**Generate** — Produce tailored instructions, evals, and dev configs using the Copilot SDK.
+**Maintain** — Run evaluations in CI to catch instruction drift as code evolves.
+
+![AgentRC — Measure, Generate, Maintain cycle](docs/assets/agentrc-overview.png)
 
 ## Quick Start
 
