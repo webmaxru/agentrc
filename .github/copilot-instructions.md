@@ -27,8 +27,14 @@ VS Code extension: `node esbuild.mjs` from `vscode-extension/`; typecheck with `
 ## Code Style
 
 - ESM syntax everywhere (`"type": "module"`). TypeScript strict mode, ES2022 target.
-- Windows/macOS/Linux compatible — use `path.join()`, avoid shell-specific syntax.
 - Do not add new build/lint/test tools; use existing npm scripts.
+
+### Cross-Platform (Windows/macOS/Linux)
+
+- Use `path.join()` for all file paths; avoid shell-specific syntax.
+- **Spawning processes:** Never assume an executable is a native binary. On Windows, CLI tools often resolve to `.bat`/`.cmd` shims (e.g., VS Code globalStorage). Use `{ shell: true }` or detect script extensions and route through `cmd.exe /c` — bare `spawn()` of a `.bat` file throws `EINVAL`.
+- **ESM/CJS interop in bundles:** When bundling CJS dependencies (e.g., `vscode-jsonrpc`) into ESM output, `require()` is unavailable at runtime. If a dependency internally calls `require()`, the tsup banner must inject a `createRequire` shim. Watch for `"Dynamic require of X is not supported"` errors after adding new dependencies.
+- **File path separators:** Use `path.sep` or `path.normalize()` when comparing or displaying paths. Never hardcode `/` or `\` in path logic.
 
 ## Architecture
 
