@@ -12,7 +12,7 @@ export function createScanRateLimiter(runtime) {
     max: runtime.scanRateLimitMax,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => ["GET", "HEAD", "OPTIONS"].includes(req.method),
+    skip: (req) => req.method === "OPTIONS",
     message: { error: "Too many scan requests. Please try again later." }
   });
 }
@@ -26,7 +26,7 @@ export function createReportRateLimiter(runtime) {
     max: runtime.reportRateLimitMax,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => ["GET", "HEAD", "OPTIONS"].includes(req.method),
+    skip: (req) => req.method === "OPTIONS",
     message: { error: "Too many report requests. Please try again later." }
   });
 }

@@ -448,7 +448,7 @@ function buildServiceInfo(report) {
     const rows = report.engine.signals
       .map(
         (s) =>
-          `<tr><td>${esc(s.id)}</td><td>${esc(s.label)}</td><td>${esc(s.kind)}</td><td class="status-${safeClass(s.status, ALLOWED_STATUS)}">${esc(s.status)}</td></tr>`
+          `<tr><td>${esc(s.id)}</td><td>${esc(s.label)}</td><td>${esc(s.kind)}</td><td class="status-${safeClass(s.status, ALLOWED_SIGNAL_STATUS)}">${esc(s.status)}</td></tr>`
       )
       .join("");
     blocks.push(
@@ -567,6 +567,7 @@ function esc(str) {
 const ALLOWED_STATUS = new Set(["pass", "fail", "skip"]);
 const ALLOWED_IMPACT = new Set(["high", "medium", "low"]);
 const ALLOWED_EFFORT = new Set(["high", "medium", "low"]);
+const ALLOWED_SIGNAL_STATUS = new Set(["detected", "not-detected", "error"]);
 function safeClass(val, allowed) {
   return allowed.has(val) ? val : "unknown";
 }
