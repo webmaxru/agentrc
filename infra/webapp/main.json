@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.41.2.15936",
-      "templateHash": "11942187342993873068"
+      "templateHash": "16412819090943212359"
     }
   },
   "parameters": {
@@ -167,7 +167,7 @@
     {
       "type": "Microsoft.ContainerRegistry/registries",
       "apiVersion": "2023-07-01",
-      "name": "[replace(format('{0}webapp', parameters('namePrefix')), '-', '')]",
+      "name": "[toLower(replace(format('{0}webapp', parameters('namePrefix')), '-', ''))]",
       "location": "[parameters('location')]",
       "tags": "[parameters('tags')]",
       "sku": {
@@ -213,18 +213,18 @@
           },
           "registries": [
             {
-              "server": "[reference(resourceId('Microsoft.ContainerRegistry/registries', replace(format('{0}webapp', parameters('namePrefix')), '-', '')), '2023-07-01').loginServer]",
-              "username": "[listCredentials(resourceId('Microsoft.ContainerRegistry/registries', replace(format('{0}webapp', parameters('namePrefix')), '-', '')), '2023-07-01').username]",
+              "server": "[reference(resourceId('Microsoft.ContainerRegistry/registries', toLower(replace(format('{0}webapp', parameters('namePrefix')), '-', ''))), '2023-07-01').loginServer]",
+              "username": "[listCredentials(resourceId('Microsoft.ContainerRegistry/registries', toLower(replace(format('{0}webapp', parameters('namePrefix')), '-', ''))), '2023-07-01').username]",
               "passwordSecretRef": "acr-password"
             }
           ],
-          "secrets": "[concat(createArray(createObject('name', 'acr-password', 'value', listCredentials(resourceId('Microsoft.ContainerRegistry/registries', replace(format('{0}webapp', parameters('namePrefix')), '-', '')), '2023-07-01').passwords[0].value)), if(not(empty(parameters('githubTokenForScan'))), createArray(createObject('name', 'gh-token-for-scan', 'value', parameters('githubTokenForScan'))), createArray()), if(parameters('enableAppInsights'), createArray(createObject('name', 'app-insights-connection-string', 'value', reference(resourceId('Microsoft.Insights/components', format('{0}-insights', parameters('namePrefix'))), '2020-02-02').ConnectionString)), createArray()))]"
+          "secrets": "[concat(createArray(createObject('name', 'acr-password', 'value', listCredentials(resourceId('Microsoft.ContainerRegistry/registries', toLower(replace(format('{0}webapp', parameters('namePrefix')), '-', ''))), '2023-07-01').passwords[0].value)), if(not(empty(parameters('githubTokenForScan'))), createArray(createObject('name', 'gh-token-for-scan', 'value', parameters('githubTokenForScan'))), createArray()), if(parameters('enableAppInsights'), createArray(createObject('name', 'app-insights-connection-string', 'value', reference(resourceId('Microsoft.Insights/components', format('{0}-insights', parameters('namePrefix'))), '2020-02-02').ConnectionString)), createArray()))]"
         },
         "template": {
           "containers": [
             {
               "name": "webapp",
-              "image": "[format('{0}/agentrc-webapp:{1}', reference(resourceId('Microsoft.ContainerRegistry/registries', replace(format('{0}webapp', parameters('namePrefix')), '-', '')), '2023-07-01').loginServer, parameters('containerImageTag'))]",
+              "image": "[format('{0}/agentrc-webapp:{1}', reference(resourceId('Microsoft.ContainerRegistry/registries', toLower(replace(format('{0}webapp', parameters('namePrefix')), '-', ''))), '2023-07-01').loginServer, parameters('containerImageTag'))]",
               "resources": {
                 "cpu": "[json('0.25')]",
                 "memory": "0.5Gi"
@@ -271,7 +271,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.ContainerRegistry/registries', replace(format('{0}webapp', parameters('namePrefix')), '-', ''))]",
+        "[resourceId('Microsoft.ContainerRegistry/registries', toLower(replace(format('{0}webapp', parameters('namePrefix')), '-', '')))]",
         "[resourceId('Microsoft.Insights/components', format('{0}-insights', parameters('namePrefix')))]",
         "[resourceId('Microsoft.App/managedEnvironments', format('{0}-env', parameters('namePrefix')))]",
         "[resourceId('Microsoft.App/managedEnvironments/storages', format('{0}-env', parameters('namePrefix')), 'reportsshare')]"
@@ -298,7 +298,7 @@
       "metadata": {
         "description": "ACR login server"
       },
-      "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', replace(format('{0}webapp', parameters('namePrefix')), '-', '')), '2023-07-01').loginServer]"
+      "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', toLower(replace(format('{0}webapp', parameters('namePrefix')), '-', ''))), '2023-07-01').loginServer]"
     },
     "appInsightsConnectionString": {
       "type": "string",

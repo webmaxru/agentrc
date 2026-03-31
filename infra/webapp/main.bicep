@@ -102,7 +102,7 @@ resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2023-0
 
 // ===== Azure Container Registry =====
 resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
-  name: replace('${namePrefix}webapp', '-', '')
+  name: toLower(replace('${namePrefix}webapp', '-', ''))
   location: location
   tags: tags
   sku: {

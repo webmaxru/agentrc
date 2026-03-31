@@ -411,7 +411,7 @@ a:hover { text-decoration: underline; }
   font-size: 13px;
   line-height: 1.5;
 }
-.snapshot-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.snapshot-icon { flex-shrink: 0; margin-top: 1px; }
 .snapshot-text strong { color: var(--color-fg-default); }
 
 /* ===== Fix First ===== */

@@ -106,7 +106,7 @@ jobs:
           resourceGroupName: ${{ env.RESOURCE_GROUP }}
           template: ${{ env.BICEP_FILE }}
           parameters: >
-            containerImage=${{ needs.build-push.outputs.image-full }}
+            containerImageTag=${{ needs.build-push.outputs.image-tag }}
             githubTokenForScan=${{ secrets.GH_TOKEN_FOR_SCAN }}
 
       - name: Smoke test

@@ -4,7 +4,7 @@ param namePrefix = 'agentrc'
 param containerImageTag = 'latest'
 param enableSharing = true
 param enableAppInsights = true
-param containerStartupStrategy = 'scale-to-zero'
+param containerStartupStrategy = 'keep-warm'
 param tags = {
   application: 'agentrc-webapp'
   managedBy: 'bicep'
