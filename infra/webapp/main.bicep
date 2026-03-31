@@ -134,16 +134,20 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           }
         ] : []
       }
-      secrets: [
-        {
-          name: 'gh-token-for-scan'
-          value: githubTokenForScan
-        }
-        {
-          name: 'app-insights-connection-string'
-          value: enableAppInsights ? appInsights!.properties.ConnectionString : ''
-        }
-      ]
+      secrets: concat(
+        !empty(githubTokenForScan) ? [
+          {
+            name: 'gh-token-for-scan'
+            value: githubTokenForScan
+          }
+        ] : [],
+        enableAppInsights ? [
+          {
+            name: 'app-insights-connection-string'
+            value: appInsights!.properties.ConnectionString
+          }
+        ] : []
+      )
     }
     template: {
       containers: [
@@ -154,7 +158,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             cpu: json('0.25')
             memory: '0.5Gi'
           }
-          env: [
+          env: concat([
             {
               name: 'NODE_ENV'
               value: 'production'
@@ -171,15 +175,19 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
               name: 'REPORTS_DIR'
               value: enableSharing ? '/app/data/reports' : ':memory:'
             }
+          ],
+          !empty(githubTokenForScan) ? [
             {
               name: 'GH_TOKEN_FOR_SCAN'
               secretRef: 'gh-token-for-scan'
             }
+          ] : [],
+          enableAppInsights ? [
             {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
               secretRef: 'app-insights-connection-string'
             }
-          ]
+          ] : [])
           probes: [
             {
               type: 'Liveness'
