@@ -82,13 +82,53 @@ export function normalizeSharedReportResult(value) {
   if (!Array.isArray(pillars)) {
     throw new ReportValidationError("pillars must be an array.");
   }
+  if (pillars.length > 50) {
+    throw new ReportValidationError("pillars array too large.");
+  }
+  for (const p of pillars) {
+    if (!p || typeof p !== "object" || Array.isArray(p)) {
+      throw new ReportValidationError("Each pillar must be a non-null object.");
+    }
+    if (typeof p.id !== "string" || p.id.length > 200) {
+      throw new ReportValidationError("Pillar id must be a string (max 200 chars).");
+    }
+    if (typeof p.name !== "string" || p.name.length > MAX_STRING_LEN) {
+      throw new ReportValidationError("Pillar name must be a string within length limits.");
+    }
+    p.passed = typeof p.passed === "number" && Number.isFinite(p.passed) ? p.passed : 0;
+    p.total = typeof p.total === "number" && Number.isFinite(p.total) ? p.total : 0;
+    p.passRate = typeof p.passRate === "number" && Number.isFinite(p.passRate) ? p.passRate : 0;
+  }
 
   if (!Array.isArray(levels)) {
     throw new ReportValidationError("levels must be an array.");
   }
+  if (levels.length > 10) {
+    throw new ReportValidationError("levels array too large.");
+  }
+  for (const l of levels) {
+    if (!l || typeof l !== "object" || Array.isArray(l)) {
+      throw new ReportValidationError("Each level must be a non-null object.");
+    }
+    if (typeof l.level !== "number" || !Number.isInteger(l.level) || l.level < 0 || l.level > 5) {
+      throw new ReportValidationError("Level.level must be an integer 0-5.");
+    }
+    if (typeof l.name !== "string" || l.name.length > MAX_STRING_LEN) {
+      throw new ReportValidationError("Level name must be a string within length limits.");
+    }
+    if (typeof l.achieved !== "boolean") {
+      throw new ReportValidationError("Level.achieved must be a boolean.");
+    }
+    l.passed = typeof l.passed === "number" && Number.isFinite(l.passed) ? l.passed : 0;
+    l.total = typeof l.total === "number" && Number.isFinite(l.total) ? l.total : 0;
+    l.passRate = typeof l.passRate === "number" && Number.isFinite(l.passRate) ? l.passRate : 0;
+  }
 
   if (!Array.isArray(criteria)) {
     throw new ReportValidationError("criteria must be an array.");
+  }
+  if (criteria.length > 500) {
+    throw new ReportValidationError("criteria array too large.");
   }
 
   // Validate string lengths and enum fields to prevent abuse

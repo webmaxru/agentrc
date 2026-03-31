@@ -81,16 +81,16 @@ async function executeScan(repoRef) {
   hideError();
   clearReport();
   hideDescription();
-  showProgress("Cloning repository…", 15);
+  showProgress("Cloning repository…");
   setFormBusy(true);
 
   try {
-    showProgress("Running readiness scan…", 45);
+    showProgress("Analyzing repository…");
 
     const report = await scanRepo(repoRef, controller.signal);
 
     syncRepoPathInBrowser(repoRef);
-    showProgress("Rendering report…", 90);
+    showProgress("Rendering report…");
     renderReport(report, { sharingEnabled: appConfig.sharingEnabled });
 
     hideProgress();
@@ -110,7 +110,7 @@ async function executeScan(repoRef) {
 
 async function loadSharedReport(id) {
   hideDescription();
-  showProgress("Loading shared report…", 50);
+  showProgress("Loading shared report…");
   setFormBusy(true);
 
   try {
@@ -136,19 +136,15 @@ async function loadSharedReport(id) {
 
 // ===== UI Helpers =====
 
-function showProgress(text, percent) {
+function showProgress(text) {
   const area = document.getElementById("progress");
-  const fill = document.getElementById("progress-fill");
   const textEl = document.getElementById("progress-text");
   area.hidden = false;
-  fill.style.width = `${percent}%`;
   textEl.textContent = text;
 }
 
 function hideProgress() {
-  const area = document.getElementById("progress");
-  area.hidden = true;
-  document.getElementById("progress-fill").style.width = "0%";
+  document.getElementById("progress").hidden = true;
 }
 
 function showError(message) {

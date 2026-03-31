@@ -109,7 +109,7 @@ resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
     name: 'Basic'
   }
   properties: {
-    adminUserEnabled: true
+    adminUserEnabled: false
   }
 }
 
@@ -127,11 +127,27 @@ resource envStorage 'Microsoft.App/managedEnvironments/storages@2024-03-01' = if
   }
 }
 
-// ===== Container App =====
+// ===== AcrPull Role Assignment (system-assigned managed identity) =====
+@description('AcrPull built-in role')
+var acrPullRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(acr.id, containerApp.id, acrPullRoleId)
+  scope: acr
+  properties: {
+    principalId: containerApp.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: acrPullRoleId
+  }
+}
+
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: '${namePrefix}-webapp'
   location: location
   tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     managedEnvironmentId: containerAppsEnv.id
     configuration: {
@@ -150,17 +166,11 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       registries: [
         {
           server: acr.properties.loginServer
-          username: acr.listCredentials().username
-          passwordSecretRef: 'acr-password'
+          identity: 'system'
         }
       ]
       secrets: concat(
-        [
-          {
-            name: 'acr-password'
-            value: acr.listCredentials().passwords[0].value
-          }
-        ],
+        [],
         !empty(ghTokenForScan) ? [
           {
             name: 'gh-token-for-scan'

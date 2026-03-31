@@ -275,9 +275,36 @@ a:hover { text-decoration: underline; }
   border-top: 1px solid var(--color-border-muted);
 }
 
-/* ===== Progress ===== */
-.progress-area { margin-bottom: 16px; }
+/* ===== Progress (scan spinner) ===== */
+.progress-area {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-border-muted);
+  border-top-color: var(--color-accent-fg);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--color-fg-muted);
+  margin: 0;
+}
+
+/* ===== Progress bars (report pillar bars) ===== */
 .progress-bar {
   height: 8px;
   background: var(--color-border-muted);
@@ -292,11 +319,6 @@ a:hover { text-decoration: underline; }
   border-radius: 4px;
   width: 0%;
   transition: width 0.4s ease;
-}
-
-.progress-text {
-  font-size: 12px;
-  color: var(--color-fg-muted);
 }
 
 /* ===== Error Banner ===== */

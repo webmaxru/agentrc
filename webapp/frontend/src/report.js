@@ -104,8 +104,8 @@ function buildHero(report) {
   const name = LEVEL_NAMES[level] || `Level ${level}`;
   const levelClass = level >= 4 ? "level-high" : level >= 2 ? "level-mid" : "level-low";
 
-  const totalPassed = (report.pillars || []).reduce((s, p) => s + p.passed, 0);
-  const totalChecks = (report.pillars || []).reduce((s, p) => s + p.total, 0);
+  const totalPassed = (report.pillars || []).reduce((s, p) => s + (Number.isFinite(p.passed) ? p.passed : 0), 0);
+  const totalChecks = (report.pillars || []).reduce((s, p) => s + (Number.isFinite(p.total) ? p.total : 0), 0);
 
   const nextLevel = (report.levels || []).find((l) => l.level === level + 1);
   let nextHtml = "";
@@ -330,13 +330,16 @@ function buildPillarDetails(report) {
   inner += `<div class="pillar-details-grid">`;
   for (const pillar of report.pillars || []) {
     const items = (report.criteria || []).filter((c) => c.pillar === pillar.id);
-    const allPass = pillar.passed === pillar.total;
+    const pPassed = Number.isFinite(pillar.passed) ? pillar.passed : 0;
+    const pTotal = Number.isFinite(pillar.total) ? pillar.total : 0;
+    const pRate = Number.isFinite(pillar.passRate) ? pillar.passRate : 0;
+    const allPass = pPassed === pTotal && pTotal > 0;
     inner += `
       <div class="repo-pillar">
         <details${allPass ? "" : " open"}>
           <summary>
             <span class="repo-pillar-name">${allPass ? "✓ " : ""}${esc(pillar.name)}</span>
-            <span class="repo-pillar-value${allPass ? " passing" : ""}">${pillar.passed}/${pillar.total}${allPass ? "" : ` (${Math.round(pillar.passRate * 100)}%)`}</span>
+            <span class="repo-pillar-value${allPass ? " passing" : ""}">${pPassed}/${pTotal}${allPass ? "" : ` (${Math.round(pRate * 100)}%)`}</span>
           </summary>
           <div class="pillar-criteria-list">
             ${

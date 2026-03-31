@@ -9,8 +9,7 @@ export function createConfigRouter(runtime) {
   router.get("/", (_req, res) => {
     res.json({
       sharingEnabled: runtime.sharingEnabled,
-      githubTokenProvided: runtime.githubTokenProvided,
-      appInsightsConnectionString: runtime.appInsightsConnectionString || null
+      githubTokenProvided: runtime.githubTokenProvided
     });
   });
 

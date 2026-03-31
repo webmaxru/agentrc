@@ -8,8 +8,8 @@ const validReport = {
   generatedAt: "2025-01-15T12:00:00.000Z",
   isMonorepo: false,
   apps: [],
-  pillars: [{ name: "Documentation", passed: 2, failed: 1 }],
-  levels: [{ level: 1, description: "Foundation" }],
+  pillars: [{ id: "documentation", name: "Documentation", passed: 2, total: 3, passRate: 0.67 }],
+  levels: [{ level: 1, name: "Functional", achieved: true, passed: 3, total: 3, passRate: 1 }],
   achievedLevel: 2,
   criteria: [
     {
