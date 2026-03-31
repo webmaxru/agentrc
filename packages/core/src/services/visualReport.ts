@@ -925,7 +925,10 @@ function getAiCriterionIcon(id: string): string {
     "custom-instructions": "&#128221;",
     "mcp-config": "&#128268;",
     "custom-agents": "&#129302;",
-    "copilot-skills": "&#9889;"
+    "copilot-skills": "&#9889;",
+    "apm-config": "&#128230;",
+    "apm-locked-deps": "&#128274;",
+    "apm-ci-integration": "&#9881;"
   };
   return icons[id] || "&#128295;";
 }

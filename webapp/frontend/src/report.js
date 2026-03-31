@@ -40,7 +40,10 @@ const AI_ICONS = {
   "custom-instructions": "📝",
   "mcp-config": "🔌",
   "custom-agents": "🤖",
-  "copilot-skills": "⚡"
+  "copilot-skills": "⚡",
+  "apm-config": "📦",
+  "apm-locked-deps": "🔒",
+  "apm-ci-integration": "⚙️"
 };
 
 // =====================================================================
