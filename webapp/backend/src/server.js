@@ -13,7 +13,7 @@ import { createReportRouter } from "./routes/report.js";
 import { createConfigRouter } from "./routes/config.js";
 import { createScanRateLimiter, createReportRateLimiter } from "./middleware/rate-limiter.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
-import { createStorage } from "./services/storage.js";
+import { createStorage, startReportCleanup, stopReportCleanup } from "./services/storage.js";
 import { startStaleDirSweeper, stopStaleDirSweeper } from "./services/scanner.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -110,6 +110,7 @@ function start() {
   const app = createApp(runtime);
 
   startStaleDirSweeper();
+  if (runtime.sharingEnabled) startReportCleanup();
 
   const server = app.listen(runtime.port, () => {
     console.log(`AgentRC webapp listening on http://localhost:${runtime.port}`);
@@ -122,6 +123,7 @@ function start() {
   const shutdown = () => {
     console.log("\nShutting down...");
     stopStaleDirSweeper();
+    stopReportCleanup();
     server.close(() => {
       console.log("Server closed.");
       process.exit(0);

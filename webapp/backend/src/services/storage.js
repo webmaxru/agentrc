@@ -7,6 +7,10 @@ import { join } from "node:path";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TTL_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+const CLEANUP_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
+
+let cleanupTimer = null;
+let activeStorage = null;
 
 /**
  * Create a storage backend.
@@ -14,9 +18,28 @@ const TTL_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
  */
 export function createStorage(reportsDir) {
   if (reportsDir === ":memory:") {
-    return createMemoryStorage();
+    activeStorage = createMemoryStorage();
+  } else {
+    activeStorage = createFileStorage(reportsDir);
   }
-  return createFileStorage(reportsDir);
+  return activeStorage;
+}
+
+/** Start periodic cleanup of expired reports. */
+export function startReportCleanup() {
+  if (cleanupTimer) return;
+  cleanupTimer = setInterval(() => {
+    if (activeStorage) activeStorage.cleanupExpired().catch(() => {});
+  }, CLEANUP_INTERVAL_MS);
+  cleanupTimer.unref();
+}
+
+/** Stop the periodic cleanup timer. */
+export function stopReportCleanup() {
+  if (cleanupTimer) {
+    clearInterval(cleanupTimer);
+    cleanupTimer = null;
+  }
 }
 
 function createMemoryStorage() {
@@ -55,13 +78,11 @@ function createMemoryStorage() {
 }
 
 function createFileStorage(reportsDir) {
-  let initialized = false;
+  // Eagerly create the directory so first writes never fail on an empty volume
+  const dirReady = mkdir(reportsDir, { recursive: true });
 
   async function ensureDir() {
-    if (!initialized) {
-      await mkdir(reportsDir, { recursive: true });
-      initialized = true;
-    }
+    await dirReady;
   }
 
   return {

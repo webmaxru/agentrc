@@ -10,4 +10,6 @@ services:
     volumes:
       - reports-data:/app/data
 volumes:
+  # Persists shared reports across container restarts.
+  # Set REPORTS_DIR=/app/data/reports in .env to enable (default is :memory:).
   reports-data:
