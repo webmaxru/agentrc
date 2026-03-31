@@ -74,11 +74,12 @@ export async function scanGitHubRepo(
         await setRemoteUrl(tempDir, baseUrl).catch(() => {});
       }
     } catch (err) {
-      if (err.message?.includes("timed out") || err.message?.includes("timeout")) {
+      const rawMessage = err instanceof Error ? err.message : String(err);
+      if (rawMessage.includes("timed out") || rawMessage.includes("timeout")) {
         throw new CloneTimeoutError();
       }
       // Strip embedded credentials from error messages to avoid leaking tokens
-      const safeMessage = (err.message || "unknown error")
+      const safeMessage = rawMessage
         .replace(/https:\/\/[^@]+@/g, "https://***@");
       throw new GitCloneError(`Failed to clone repository: ${safeMessage}`);
     }
