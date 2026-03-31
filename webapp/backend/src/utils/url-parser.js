@@ -27,7 +27,7 @@ export function parseRepoUrl(input) {
 
   // Shorthand: owner/repo
   if (!trimmed.includes("://")) {
-    const parts = trimmed.split("/");
+    const parts = trimmed.split("/").filter(Boolean);
     if (parts.length !== 2) {
       throw new ValidationError('Invalid repo reference. Expected "owner/repo" or a GitHub URL.');
     }

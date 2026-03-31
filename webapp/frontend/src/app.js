@@ -192,9 +192,15 @@ function initThemeToggle() {
     const current = document.documentElement.getAttribute("data-theme");
     const next = current === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-    document.querySelector('meta[name="theme-color"]').content =
-      next === "dark" ? "#0d1117" : "#ffffff";
+    try {
+      localStorage.setItem("theme", next);
+    } catch {
+      // Storage may be unavailable (Safari private mode, quota exceeded, etc.)
+    }
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.content = next === "dark" ? "#0d1117" : "#ffffff";
+    }
     updateThemeIcon(btn);
   });
 }

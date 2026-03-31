@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 
 // Mock @agentrc/core modules before importing routes
 vi.mock("@agentrc/core/services/git", () => ({
@@ -59,7 +61,7 @@ describe("API routes", () => {
       githubTokenProvided: false,
       sharingEnabled: true,
       reportsDir: ":memory:",
-      frontendPath: import.meta.dirname + "/../../../webapp/frontend",
+      frontendPath: resolve(dirname(fileURLToPath(import.meta.url)), "../../../webapp/frontend"),
       cloneTimeoutMs: 60000,
       maxConcurrentScans: 5,
       scanRateLimitWindowMs: 900000,
