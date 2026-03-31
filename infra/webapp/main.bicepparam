@@ -1,6 +1,7 @@
 using './main.bicep'
 
 param namePrefix = 'agentrc'
+param containerImageTag = 'latest'
 param enableSharing = true
 param enableAppInsights = true
 param containerStartupStrategy = 'scale-to-zero'

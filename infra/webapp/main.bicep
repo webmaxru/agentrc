@@ -7,8 +7,8 @@ param namePrefix string = 'agentrc'
 @description('Azure region')
 param location string = resourceGroup().location
 
-@description('Container image to deploy')
-param containerImage string = 'ghcr.io/microsoft/agentrc-webapp:latest'
+@description('Container image to deploy (tag only — registry is derived from the ACR resource)')
+param containerImageTag string = 'latest'
 
 @description('Enable Application Insights')
 param enableAppInsights bool = true
@@ -100,6 +100,19 @@ resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2023-0
   }
 }
 
+// ===== Azure Container Registry =====
+resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
+  name: replace('${namePrefix}webapp', '-', '')
+  location: location
+  tags: tags
+  sku: {
+    name: 'Basic'
+  }
+  properties: {
+    adminUserEnabled: true
+  }
+}
+
 // ===== Container Apps Environment Storage (for Azure Files mount) =====
 resource envStorage 'Microsoft.App/managedEnvironments/storages@2024-03-01' = if (enableSharing) {
   parent: containerAppsEnv
@@ -134,7 +147,20 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           }
         ] : []
       }
+      registries: [
+        {
+          server: acr.properties.loginServer
+          username: acr.listCredentials().username
+          passwordSecretRef: 'acr-password'
+        }
+      ]
       secrets: concat(
+        [
+          {
+            name: 'acr-password'
+            value: acr.listCredentials().passwords[0].value
+          }
+        ],
         !empty(githubTokenForScan) ? [
           {
             name: 'gh-token-for-scan'
@@ -153,7 +179,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       containers: [
         {
           name: 'webapp'
-          image: containerImage
+          image: '${acr.properties.loginServer}/agentrc-webapp:${containerImageTag}'
           resources: {
             cpu: json('0.25')
             memory: '0.5Gi'
@@ -248,6 +274,9 @@ output appFqdn string = containerApp.properties.configuration.ingress.fqdn
 
 @description('Container App URL')
 output appUrl string = 'https://${containerApp.properties.configuration.ingress.fqdn}'
+
+@description('ACR login server')
+output acrLoginServer string = acr.properties.loginServer
 
 @description('Application Insights connection string')
 output appInsightsConnectionString string = enableAppInsights ? appInsights!.properties.ConnectionString : ''
