@@ -47,7 +47,7 @@ jobs:
           cache: npm
           cache-dependency-path: webapp/frontend/package-lock.json
       - name: Install frontend dependencies
-        run: cd webapp/frontend && npm install
+        run: cd webapp/frontend && npm ci
       - name: Run tests
         run: cd webapp/frontend && npm test
 

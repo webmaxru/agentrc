@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
-
-// Import as module
-const { parseGitHubReference, normalizeRepoReference, getRepoFromPath, getSharedReportId } =
-  await import("../src/repo-location.js");
+import {
+  parseGitHubReference,
+  normalizeRepoReference,
+  getRepoFromPath,
+  getSharedReportId,
+} from "../src/repo-location.js";
 
 describe("parseGitHubReference", () => {
   it("parses owner/repo", () => {
