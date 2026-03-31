@@ -1,7 +1,7 @@
 /**
  * Scan orchestrator — clones a GitHub repo and runs readiness report.
  */
-import { cloneRepo } from "@agentrc/core/services/git";
+import { cloneRepo, setRemoteUrl } from "@agentrc/core/services/git";
 import { runReadinessReport } from "@agentrc/core/services/readiness";
 import { createTempDir, removeTempDir, sweepStaleTempDirs } from "../utils/cleanup.js";
 
@@ -68,6 +68,11 @@ export async function scanGitHubRepo(
         shallow: true,
         timeoutMs
       });
+      // Best-effort: strip credentials from the git remote to avoid
+      // token persistence in .git/config (matches @agentrc/core/services/batch.ts)
+      if (token) {
+        await setRemoteUrl(tempDir, baseUrl).catch(() => {});
+      }
     } catch (err) {
       if (err.message?.includes("timed out") || err.message?.includes("timeout")) {
         throw new CloneTimeoutError();

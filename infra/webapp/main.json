@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.41.2.15936",
-      "templateHash": "10396563576958269501"
+      "templateHash": "11942187342993873068"
     }
   },
   "parameters": {
@@ -130,7 +130,7 @@
       "condition": "[parameters('enableSharing')]",
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2023-05-01",
-      "name": "[replace(format('{0}store', parameters('namePrefix')), '-', '')]",
+      "name": "[toLower(replace(format('{0}st{1}', parameters('namePrefix'), uniqueString(resourceGroup().id)), '-', ''))]",
       "location": "[parameters('location')]",
       "tags": "[parameters('tags')]",
       "sku": {
@@ -147,21 +147,21 @@
       "condition": "[parameters('enableSharing')]",
       "type": "Microsoft.Storage/storageAccounts/fileServices",
       "apiVersion": "2023-05-01",
-      "name": "[format('{0}/{1}', replace(format('{0}store', parameters('namePrefix')), '-', ''), 'default')]",
+      "name": "[format('{0}/{1}', toLower(replace(format('{0}st{1}', parameters('namePrefix'), uniqueString(resourceGroup().id)), '-', '')), 'default')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', replace(format('{0}store', parameters('namePrefix')), '-', ''))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', toLower(replace(format('{0}st{1}', parameters('namePrefix'), uniqueString(resourceGroup().id)), '-', '')))]"
       ]
     },
     {
       "condition": "[parameters('enableSharing')]",
       "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
       "apiVersion": "2023-05-01",
-      "name": "[format('{0}/{1}/{2}', replace(format('{0}store', parameters('namePrefix')), '-', ''), 'default', 'reports')]",
+      "name": "[format('{0}/{1}/{2}', toLower(replace(format('{0}st{1}', parameters('namePrefix'), uniqueString(resourceGroup().id)), '-', '')), 'default', 'reports')]",
       "properties": {
         "shareQuota": 1
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/fileServices', replace(format('{0}store', parameters('namePrefix')), '-', ''), 'default')]"
+        "[resourceId('Microsoft.Storage/storageAccounts/fileServices', toLower(replace(format('{0}st{1}', parameters('namePrefix'), uniqueString(resourceGroup().id)), '-', '')), 'default')]"
       ]
     },
     {
@@ -184,15 +184,15 @@
       "name": "[format('{0}/{1}', format('{0}-env', parameters('namePrefix')), 'reportsshare')]",
       "properties": {
         "azureFile": {
-          "accountName": "[replace(format('{0}store', parameters('namePrefix')), '-', '')]",
-          "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', replace(format('{0}store', parameters('namePrefix')), '-', '')), '2023-05-01').keys[0].value]",
+          "accountName": "[toLower(replace(format('{0}st{1}', parameters('namePrefix'), uniqueString(resourceGroup().id)), '-', ''))]",
+          "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', toLower(replace(format('{0}st{1}', parameters('namePrefix'), uniqueString(resourceGroup().id)), '-', ''))), '2023-05-01').keys[0].value]",
           "shareName": "reports",
           "accessMode": "ReadWrite"
         }
       },
       "dependsOn": [
         "[resourceId('Microsoft.App/managedEnvironments', format('{0}-env', parameters('namePrefix')))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', replace(format('{0}store', parameters('namePrefix')), '-', ''))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', toLower(replace(format('{0}st{1}', parameters('namePrefix'), uniqueString(resourceGroup().id)), '-', '')))]"
       ]
     },
     {

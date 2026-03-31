@@ -73,7 +73,7 @@ resource containerAppsEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
 
 // ===== Storage Account + File Share (for report sharing) =====
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = if (enableSharing) {
-  name: replace('${namePrefix}store', '-', '')
+  name: toLower(replace('${namePrefix}st${uniqueString(resourceGroup().id)}', '-', ''))
   location: location
   tags: tags
   sku: {

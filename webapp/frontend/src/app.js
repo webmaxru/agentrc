@@ -75,7 +75,8 @@ async function executeScan(repoRef) {
   if (currentAbortController) {
     currentAbortController.abort();
   }
-  currentAbortController = new AbortController();
+  const controller = new AbortController();
+  currentAbortController = controller;
 
   hideError();
   clearReport();
@@ -86,7 +87,7 @@ async function executeScan(repoRef) {
   try {
     showProgress("Running readiness scan…", 45);
 
-    const report = await scanRepo(repoRef, currentAbortController.signal);
+    const report = await scanRepo(repoRef, controller.signal);
 
     syncRepoPathInBrowser(repoRef);
     showProgress("Rendering report…", 90);
@@ -98,8 +99,12 @@ async function executeScan(repoRef) {
     hideProgress();
     showError(err.message || "Scan failed. Please try again.");
   } finally {
-    setFormBusy(false);
-    currentAbortController = null;
+    // Only clear state if this is still the active scan — avoids
+    // a stale aborted scan from resetting a newer in-progress scan.
+    if (currentAbortController === controller) {
+      setFormBusy(false);
+      currentAbortController = null;
+    }
   }
 }
 

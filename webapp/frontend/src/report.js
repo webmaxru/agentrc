@@ -277,7 +277,7 @@ function buildPillarPerformance(report) {
 // =====================================================================
 
 function buildMaturityModel(report) {
-  const level = report.achievedLevel ?? 1;
+  const level = report.achievedLevel ?? 0;
 
   const el = createElement("div", "section");
   el.innerHTML = `
@@ -288,6 +288,15 @@ function buildMaturityModel(report) {
     <div class="maturity-labels">
       ${[1, 2, 3, 4, 5].map((l) => `<div class="maturity-label${l === level ? " current" : ""}">${l}. ${esc(LEVEL_NAMES[l])}</div>`).join("")}
     </div>
+    ${level === 0 ? `
+      <div class="maturity-item active">
+        <div class="maturity-header">
+          <span class="level-badge level-0">0</span>
+          <span class="maturity-name">Not yet assessed</span>
+          <span class="maturity-count">Current</span>
+        </div>
+        <div class="maturity-desc">No maturity level achieved yet.</div>
+      </div>` : ""}
     ${[level, level + 1]
       .filter((l) => l >= 1 && l <= 5)
       .map(
