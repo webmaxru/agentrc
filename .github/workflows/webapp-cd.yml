@@ -141,6 +141,8 @@ jobs:
           parameters: >
             containerImageTag=${{ needs.build-push.outputs.image-tag }}
             ghTokenForScan=${{ secrets.GH_TOKEN_FOR_SCAN }}
+            customDomain=${{ vars.CUSTOM_DOMAIN || '' }}
+            customDomainCertReady=${{ vars.CUSTOM_DOMAIN_CERT_READY || 'false' }}
 
       - name: Ensure image in ACR
         run: |
@@ -176,3 +178,10 @@ jobs:
           curl -sf "https://${APP_URL}/api/health" | grep -q '"ok"'
           curl -sf "https://${APP_URL}/" | grep -q "AgentRC"
           echo "Smoke tests passed!"
+
+          CUSTOM_DOMAIN="${{ vars.CUSTOM_DOMAIN }}"
+          if [ -n "$CUSTOM_DOMAIN" ] && [ "${{ vars.CUSTOM_DOMAIN_CERT_READY }}" = "true" ]; then
+            echo "Testing custom domain https://${CUSTOM_DOMAIN}"
+            curl -sf "https://${CUSTOM_DOMAIN}/api/health" | grep -q '"ok"'
+            echo "Custom domain smoke test passed!"
+          fi

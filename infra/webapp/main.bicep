@@ -26,8 +26,11 @@ param ghTokenForScan string = ''
 @allowed(['scale-to-zero', 'keep-warm'])
 param containerStartupStrategy string = 'keep-warm'
 
-@description('Custom domain (optional, leave empty to skip)')
+@description('Custom domain (optional, leave empty to skip). Requires DNS to be configured first — see outputs.')
 param customDomain string = ''
+
+@description('Set to true only after DNS records (CNAME + TXT) are verified. First deploy with false to get verification ID.')
+param customDomainCertReady bool = false
 
 @description('Tags for all resources')
 param tags object = {}
@@ -129,6 +132,18 @@ resource envStorage 'Microsoft.App/managedEnvironments/storages@2024-03-01' = if
   }
 }
 
+// ===== Managed Certificate for Custom Domain =====
+resource managedCert 'Microsoft.App/managedEnvironments/managedCertificates@2024-03-01' = if (!empty(customDomain) && customDomainCertReady) {
+  parent: containerAppsEnv
+  name: 'cert-${replace(customDomain, '.', '-')}'
+  location: location
+  tags: tags
+  properties: {
+    subjectName: customDomain
+    domainControlValidation: 'CNAME'
+  }
+}
+
 // ===== AcrPull Role Assignment (system-assigned managed identity) =====
 @description('AcrPull built-in role')
 var acrPullRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
@@ -161,7 +176,8 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         customDomains: !empty(customDomain) ? [
           {
             name: customDomain
-            bindingType: 'SniEnabled'
+            bindingType: customDomainCertReady ? 'SniEnabled' : 'Disabled'
+            certificateId: customDomainCertReady ? managedCert.id : null
           }
         ] : []
       }
@@ -295,3 +311,6 @@ output appInsightsConnectionString string = enableAppInsights ? appInsights!.pro
 
 @description('Log Analytics Workspace ID')
 output logAnalyticsWorkspaceId string = logAnalytics.id
+
+@description('Custom domain verification ID (use as TXT record value for asuid.{subdomain})')
+output domainVerificationId string = containerAppsEnv.properties.customDomainConfiguration.customDomainVerificationId
