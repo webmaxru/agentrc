@@ -245,8 +245,7 @@ describe("API routes", () => {
       const res = await fetch(`${base}/`);
       expect(res.status).toBe(200);
       const html = await res.text();
-      // Should derive from localhost + the ephemeral port
-      const url = new URL(base);
+      // Should derive from localhost + the runtime port
       expect(html).toContain(`http://localhost:${runtime.port}`);
       expect(html).not.toContain("%SITE_URL%");
     });
