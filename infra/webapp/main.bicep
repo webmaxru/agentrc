@@ -105,6 +105,13 @@ resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2023-0
   }
 }
 
+// ===== User-Assigned Managed Identity (for ACR pull) =====
+resource acrPullIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: '${namePrefix}-acr-pull'
+  location: location
+  tags: tags
+}
+
 // ===== Azure Container Registry =====
 resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   name: take(toLower(replace('${namePrefix}webapp', '-', '')), 50)
@@ -144,15 +151,15 @@ resource managedCert 'Microsoft.App/managedEnvironments/managedCertificates@2024
   }
 }
 
-// ===== AcrPull Role Assignment (system-assigned managed identity) =====
+// ===== AcrPull Role Assignment (user-assigned managed identity) =====
 @description('AcrPull built-in role')
 var acrPullRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
 
 resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(acr.id, containerApp.id, acrPullRoleId)
+  name: guid(acr.id, acrPullIdentity.id, acrPullRoleId)
   scope: acr
   properties: {
-    principalId: containerApp.identity.principalId
+    principalId: acrPullIdentity.properties.principalId
     principalType: 'ServicePrincipal'
     roleDefinitionId: acrPullRoleId
   }
@@ -163,7 +170,10 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   location: location
   tags: tags
   identity: {
-    type: 'SystemAssigned'
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${acrPullIdentity.id}': {}
+    }
   }
   properties: {
     managedEnvironmentId: containerAppsEnv.id
@@ -184,7 +194,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       registries: [
         {
           server: acr.properties.loginServer
-          identity: 'system'
+          identity: acrPullIdentity.id
         }
       ]
       secrets: concat(
@@ -293,7 +303,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       }
     }
   }
-  dependsOn: enableSharing ? [envStorage] : []
+  dependsOn: enableSharing ? [acrPullRoleAssignment, envStorage] : [acrPullRoleAssignment]
 }
 
 // ===== Outputs =====
