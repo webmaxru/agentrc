@@ -136,7 +136,10 @@ export function createApp(runtime) {
 
     if (hostHeader) {
       // Host header is typically "hostname" or "hostname:port".
-      const host = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
+      // It may be comma-separated when multiple proxies are involved;
+      // take the first (client-facing) value.
+      const raw = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
+      const host = raw.split(",")[0].trim();
       let hostname;
       try {
         // Use URL parsing to correctly handle IPv6, ports, etc.
