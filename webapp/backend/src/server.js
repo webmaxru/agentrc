@@ -128,14 +128,34 @@ export function createApp(runtime) {
     if (preRenderedHtml) return preRenderedHtml;
 
     // Derive a safe base URL when CUSTOM_DOMAIN/runtime.siteUrl is not set.
-    // Use Express's hostname handling and constrain to known-safe dev hosts.
+    // Prefer X-Forwarded-Host (for reverse proxies) and fall back to Host.
     const allowedDevHosts = new Set(["localhost", "127.0.0.1", "::1"]);
-    let hostname = req.hostname;
-    if (!allowedDevHosts.has(hostname)) {
-      hostname = "localhost";
-    }
+    const hostHeader = req.headers["x-forwarded-host"] || req.headers.host;
 
-    const baseUrl = `${req.protocol}://${hostname}:${runtime.port}`;
+    let baseUrl;
+
+    if (hostHeader) {
+      // Host header is typically "hostname" or "hostname:port".
+      const host = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
+      const [hostname] = host.split(":");
+      const isDevHost = allowedDevHosts.has(hostname);
+      const isAzureContainerApp = /\.azurecontainerapps\.io$/i.test(hostname);
+
+      if (isDevHost) {
+        // In true local-dev, keep using the configured runtime.port.
+        baseUrl = `${req.protocol}://localhost:${runtime.port}`;
+      } else if (isAzureContainerApp) {
+        // For default Container Apps FQDNs, trust the hostname and omit port.
+        baseUrl = `${req.protocol}://${hostname}`;
+      } else {
+        // For any other host, be conservative: use the hostname without an
+        // explicit port to avoid leaking internal ports in absolute URLs.
+        baseUrl = `${req.protocol}://${hostname}`;
+      }
+    } else {
+      // Last-resort fallback when no host information is available.
+      baseUrl = `${req.protocol}://localhost:${runtime.port}`;
+    }
     return rawIndexHtml.replaceAll("%SITE_URL%", baseUrl);
   }
 
