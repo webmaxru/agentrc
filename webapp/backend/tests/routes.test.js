@@ -53,8 +53,13 @@ describe("API routes", () => {
   let runtime;
   let base;
   let server;
+  const savedCustomDomain = process.env.CUSTOM_DOMAIN;
 
   beforeEach(async () => {
+    // Clear CUSTOM_DOMAIN so createRuntime()'s parseCustomDomain validation
+    // never throws due to host-environment values (e.g. "localhost").
+    delete process.env.CUSTOM_DOMAIN;
+
     runtime = {
       ...createRuntime(),
       githubToken: "",
@@ -75,7 +80,15 @@ describe("API routes", () => {
     ({ base, server } = await listen(app));
   });
 
-  afterEach(() => server?.close());
+  afterEach(() => {
+    server?.close();
+    // Restore original CUSTOM_DOMAIN so we don't leak state to other suites.
+    if (savedCustomDomain !== undefined) {
+      process.env.CUSTOM_DOMAIN = savedCustomDomain;
+    } else {
+      delete process.env.CUSTOM_DOMAIN;
+    }
+  });
 
   describe("GET /api/health", () => {
     it("returns ok status", async () => {
