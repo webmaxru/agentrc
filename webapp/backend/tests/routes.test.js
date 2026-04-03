@@ -48,6 +48,14 @@ function listen(app) {
   });
 }
 
+/** Gracefully close an HTTP server, resolving once the underlying handle is freed. */
+function closeServer(s) {
+  return new Promise((resolve, reject) => {
+    if (!s) return resolve();
+    s.close((err) => (err ? reject(err) : resolve()));
+  });
+}
+
 describe("API routes", () => {
   let app;
   let runtime;
@@ -80,8 +88,8 @@ describe("API routes", () => {
     ({ base, server } = await listen(app));
   });
 
-  afterEach(() => {
-    server?.close();
+  afterEach(async () => {
+    await closeServer(server);
     // Restore original CUSTOM_DOMAIN so we don't leak state to other suites.
     if (savedCustomDomain !== undefined) {
       process.env.CUSTOM_DOMAIN = savedCustomDomain;
@@ -184,7 +192,7 @@ describe("API routes", () => {
     });
 
     it("returns 503 when sharing is disabled", async () => {
-      server?.close();
+      await closeServer(server);
       runtime.sharingEnabled = false;
       app = createApp(runtime);
       ({ base, server } = await listen(app));
@@ -236,7 +244,7 @@ describe("API routes", () => {
 
   describe("index.html templating (%SITE_URL% replacement)", () => {
     it("replaces %SITE_URL% with runtime.siteUrl when CUSTOM_DOMAIN is configured", async () => {
-      server?.close();
+      await closeServer(server);
       runtime.siteUrl = "https://app.example.com";
       app = createApp(runtime);
       ({ base, server } = await listen(app));
@@ -250,7 +258,7 @@ describe("API routes", () => {
     });
 
     it("derives %SITE_URL% from the request host when siteUrl is empty", async () => {
-      server?.close();
+      await closeServer(server);
       runtime.siteUrl = "";
       app = createApp(runtime);
       ({ base, server } = await listen(app));
@@ -267,7 +275,7 @@ describe("API routes", () => {
     });
 
     it("replaces %SITE_URL% on SPA catch-all routes", async () => {
-      server?.close();
+      await closeServer(server);
       runtime.siteUrl = "https://spa.example.com";
       app = createApp(runtime);
       ({ base, server } = await listen(app));
@@ -281,7 +289,7 @@ describe("API routes", () => {
     });
 
     it("derives %SITE_URL% from request host on SPA catch-all when siteUrl is empty", async () => {
-      server?.close();
+      await closeServer(server);
       runtime.siteUrl = "";
       app = createApp(runtime);
       ({ base, server } = await listen(app));
